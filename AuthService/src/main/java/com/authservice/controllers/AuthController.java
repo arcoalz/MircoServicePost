@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Collection;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -37,7 +39,7 @@ public class AuthController {
 
         if (authentication.isAuthenticated()) {
             final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
-            final String jwt = jwtUtil.generateToken(userDetails.getUsername());
+            final String jwt = jwtUtil.generateToken(request.getUsername(), userDetails.getAuthorities());
             return ResponseEntity.ok(new AuthResponse(jwt));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
