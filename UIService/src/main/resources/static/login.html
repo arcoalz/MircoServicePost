@@ -22,6 +22,27 @@
 </div>
 
 <script>
+function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+}
+
+function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for(let i=0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0)===' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
+
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -43,12 +64,19 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         });
         
         if (response.ok) {
-            window.location.href = '/home';
+            const data = await response.json();
+            setCookie('token', data.token, 7); 
+            setCookie('username', data.username, 7);
+            if (data.roles && data.roles.length > 0) {
+                setCookie('role', data.roles[0].authority, 7);
+            }
+            window.location.href = '/home.html';
         } else {
             errorMessage.textContent = 'Invalid username or password';
             errorMessage.style.display = 'block';
         }
     } catch (error) {
+        console.error('Login error:', error);
         errorMessage.textContent = 'An error occurred. Please try again.';
         errorMessage.style.display = 'block';
     }

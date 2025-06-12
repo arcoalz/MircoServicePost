@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/auth")
@@ -33,16 +36,17 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> createToken(@RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResponse> createToken(@RequestBody AuthRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
         if (authentication.isAuthenticated()) {
             final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
             final String jwt = jwtUtil.generateToken(request.getUsername(), userDetails.getAuthorities());
-            return ResponseEntity.ok(new AuthResponse(jwt));
+            AuthResponse response = new AuthResponse(jwt, request.getUsername(), userDetails.getAuthorities());
+            return new ResponseEntity<AuthResponse>(response, HttpStatus.OK);
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
 }

@@ -22,30 +22,28 @@ public class UserController {
 
     private final UserService userService;
 
-
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
-
     @PostMapping
-    public ResponseEntity<User> save(@RequestBody User user) {
-        boolean hasAccess = true;
+    public ResponseEntity<User> save(@RequestBody User user, HttpServletRequest request) {
+        requireRole(request, jwtUtil, "ADMIN");
         return ResponseEntity.ok(userService.save(user));
     }
 
     @GetMapping("/{id}")
-
-    public ResponseEntity<User> findById(@PathVariable Long id) {
+    public ResponseEntity<User> findById(@PathVariable Long id, HttpServletRequest request) {
+        requireRole(request, jwtUtil, "ADMIN");
         return ResponseEntity.ok(userService.findById(Math.toIntExact(id)));
     }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-
     @PutMapping
-    public ResponseEntity<User> update(@RequestBody User user) {
+    public ResponseEntity<User> update(@RequestBody User user, HttpServletRequest request) {
+        requireRole(request, jwtUtil, "ADMIN");
         return ResponseEntity.ok(userService.update(user));
     }
+
     @GetMapping("/all")
     public ResponseEntity<List<User>> findAll(HttpServletRequest request) {
         requireRole(request, jwtUtil, "ADMIN");
@@ -53,7 +51,8 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteById(@PathVariable Long id) {
+    public ResponseEntity<?> deleteById(@PathVariable Long id, HttpServletRequest request) {
+        requireRole(request, jwtUtil, "ADMIN");
         userService.deleteById(Math.toIntExact(id));
         return ResponseEntity.ok().build();
     }

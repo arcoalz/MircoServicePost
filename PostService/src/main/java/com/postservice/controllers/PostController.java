@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Arrays;
@@ -15,9 +16,7 @@ import static com.postservice.utils.JwtUtils.requireRole;
 
 @RestController
 @RequestMapping("/api/posts")
-
 public class PostController {
-
 
     @Autowired
     private PostService postService;
@@ -25,25 +24,28 @@ public class PostController {
     private JwtUtils jwtUtils;
 
     @GetMapping("/all")
-    public List<Post> getAllPosts() {
-        return postService.findAll();
+    public ResponseEntity<List<Post>> getAllPosts(HttpServletRequest request) {
+        // Verify token is present and valid
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).build();
+        }
+        return ResponseEntity.ok(postService.findAll());
     }
-
 
     @DeleteMapping("/{id}")
-    public void deletePost(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<?> deletePost(@PathVariable Long id, HttpServletRequest request) {
         requireRole(request, jwtUtils, List.of("ADMIN"));
         postService.deleteById(Math.toIntExact(id));
+        return ResponseEntity.ok().build();
     }
 
-
     @PostMapping("/")
-    public Post createPost(@RequestBody Post post, HttpServletRequest request) {
+    public ResponseEntity<Post> createPost(@RequestBody Post post, HttpServletRequest request) {
         requireRole(request, jwtUtils, Arrays.asList("ADMIN", "BLOGGER"));
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         post.setAuthor(username);
-        return postService.save(post);
+        return ResponseEntity.ok(postService.save(post));
     }
-
 }
